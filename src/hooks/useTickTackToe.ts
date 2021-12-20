@@ -1,18 +1,32 @@
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import type { AppRootStateType } from "./../store";
+import {
+    boardAC,
+    ternAC,
+    nameAC,
+    statusAC,
+    isFinishedAC,
+    winPositionAC,
+    playersAC
+} from "./../hooks/hooks-reducer";
+import type { InitialStateFromHooksType } from "./../hooks/hooks-reducer";
+
 type ReturnValueType = {
-    board: string[];
-    status: string;
-    name: string | null;
     handleClick: (index: number) => void;
     handleRestart: () => void;
     handleStart: (players: string[]) => void;
 }
-export default (): ReturnValueType => {
-    const [board, setBoard] = useState(Array(9).fill(""));
-    const [turn, setTurn] = useState("X");
-    const [name, setName] = useState<string | null>(null);
-    const [status, setStatus] = useState("created");
-    const [players, setPlayers] = useState(["", ""]);
+const useTickTackToe = (): ReturnValueType => {
+    const dispatch = useDispatch();
+    let {
+        board,
+        turn,
+        name,
+        status,
+        players
+    } = useSelector<AppRootStateType, InitialStateFromHooksType>(state => state.hooks);
+
     useEffect(() => {
         if (status !== "started") return;
         const winningPositions = [
@@ -27,42 +41,52 @@ export default (): ReturnValueType => {
         ];
         let winningPositionsIndex = 0;
         let winner: string | null = null;
+        let isFinished = false;
+        let boardPositionsToCheck: number[] = [];
         while (winningPositionsIndex < winningPositions.length && !winner) {
-            const boardPositionsToCheck = winningPositions[winningPositionsIndex];
+            boardPositionsToCheck = winningPositions[winningPositionsIndex];
             const boardValuesToCkeck = boardPositionsToCheck.map(
                 (index) => board[index]
             );
             const checkingValue = boardValuesToCkeck[0];
-            const isFinished = boardValuesToCkeck.every(
+            isFinished = boardValuesToCkeck.every(
                 (value) => value === checkingValue && checkingValue
             );
             winner = !isFinished ? null : checkingValue;
             winningPositionsIndex++;
         }
+        dispatch(isFinishedAC(isFinished));
+        dispatch(winPositionAC(boardPositionsToCheck));
         if (winner) {
-            setName(winner === "X" ? players[0] : players[1]);
-            setStatus("finished");
+            dispatch(nameAC(winner === "X" ? players[0] : players[1]));
+            setTimeout(() => {
+                dispatch(statusAC("finished"));
+            }, 2000)
             return;
         }
-        setStatus(board.filter((value) => !value).length ? "started" : "finished");
-    }, [board, players, status]);
+        dispatch(statusAC(board.filter((value) => !value).length ? "started" : "finished"));
+    }, [board, players, status, dispatch]);
     const handleClick = (index: number): void => {
         if (index < 0 || index > 9 || name) return;
         const newBoard = [...board];
         newBoard.splice(index, 1, turn);
-        setBoard(newBoard);
+        dispatch(boardAC(newBoard));
         const newTurn = turn === "X" ? "O" : "X";
-        setTurn(newTurn);
+        dispatch(ternAC(newTurn));
     };
     const handleStart = (players: string[]) => {
-        setPlayers(players);
-        setTurn("X");
-        setStatus("started");
+        dispatch(playersAC(players));
+        dispatch(ternAC("X"));
+        dispatch(statusAC("started"));
     };
     const handleRestart = () => {
-        setBoard(Array(9).fill(""));
-        setName("");
-        setStatus("created");
+        dispatch(boardAC(Array(9).fill("")));
+        dispatch(nameAC(""));
+        dispatch(statusAC("created"));
+        dispatch(playersAC(["", ""]));
     };
-    return { board, status, name, handleClick, handleRestart, handleStart };
+
+    return { handleClick, handleRestart, handleStart };
 };
+
+export default useTickTackToe;

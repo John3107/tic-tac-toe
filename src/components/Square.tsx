@@ -1,21 +1,27 @@
-interface Props {
+import Button from '@mui/material/Button';
+
+type SquarePropsType = {
     index: number;
     value: string;
     handleClick(index: number): void;
 }
-const Square = (props: Props) => {
+const Square = (props: SquarePropsType) => {
     const { index, value, handleClick } = props;
     const styles = {
         button: {
             width: "100px",
             height: "100px",
-            fontSize: "46px"
+            color: "#bdbebd",
+            fontSize: "90px",
+            backgroundColor: "#3B445f",
+            borderRadius: "2px",
+            border: "none"
         }
     };
     return (
-        <button style={styles.button} onClick={() => handleClick(index)}>
+        <Button style={styles.button} onClick={() => handleClick(index)}>
             {value}
-        </button>
+        </Button>
     );
 };
 export default Square;
